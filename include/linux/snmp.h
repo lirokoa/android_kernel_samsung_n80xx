@@ -231,6 +231,7 @@ enum
 	LINUX_MIB_IPRPFILTER, /* IP Reverse Path Filter (rp_filter) */
 	LINUX_MIB_TCPTIMEWAITOVERFLOW,		/* TCPTimeWaitOverflow */
 	LINUX_MIB_TCPCHALLENGEACK,		/* TCPChallengeACK */
+	LINUX_MIB_TCPSYNCHALLENGE,		/* TCPSYNChallenge */
 	__LINUX_MIB_MAX
 };
 
