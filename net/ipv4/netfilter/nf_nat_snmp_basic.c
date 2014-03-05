@@ -400,11 +400,8 @@ static unsigned char asn1_octets_decode(struct asn1_ctx *ctx,
 	*len = 0;
 
 	*octets = kmalloc(eoc - ctx->pointer, GFP_ATOMIC);
-	if (*octets == NULL) {
-		if (net_ratelimit())
-			pr_notice("OOM in bsalg (%d)\n", __LINE__);
+	if (*octets == NULL)
 		return 0;
-	}
 
 	ptr = *octets;
 	while (ctx->pointer < eoc) {
@@ -451,11 +448,8 @@ static unsigned char asn1_oid_decode(struct asn1_ctx *ctx,
 		return 0;
 
 	*oid = kmalloc(size * sizeof(unsigned long), GFP_ATOMIC);
-	if (*oid == NULL) {
-		if (net_ratelimit())
-			pr_notice("OOM in bsalg (%d)\n", __LINE__);
+	if (*oid == NULL)
 		return 0;
-	}
 
 	optr = *oid;
 
