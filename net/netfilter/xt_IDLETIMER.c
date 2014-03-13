@@ -295,10 +295,11 @@ static int idletimer_tg_create(struct idletimer_tg_info *info)
 	info->timer->active = true;
 	info->timer->timeout = info->timeout;
 
+	spin_lock_bh(&timestamp_lock);
 	info->timer->delayed_timer_trigger.tv_sec = 0;
 	info->timer->delayed_timer_trigger.tv_nsec = 0;
-	info->timer->work_pending = false;
 	get_monotonic_boottime(&info->timer->last_modified_timer);
+	spin_unlock_bh(&timestamp_lock);
 
 	info->timer->pm_nb.notifier_call = idletimer_resume;
 	ret = register_pm_notifier(&info->timer->pm_nb);
@@ -337,10 +338,9 @@ static void reset_timer(const struct idletimer_tg_info *info)
 		/* checks if there is a pending inactive notification*/
 		if (timer->work_pending)
 			timer->delayed_timer_trigger = timer->last_modified_timer;
-		else {
-			timer->work_pending = true;
-			schedule_work(&timer->work);
-		}
+
+		get_monotonic_boottime(&timer->last_modified_timer);
+		schedule_work(&timer->work);
 	}
 
 	get_monotonic_boottime(&timer->last_modified_timer);
