@@ -127,6 +127,10 @@
 static struct class *mdnie_class;
 struct mdnie_info *g_mdnie;
 
+static unsigned short red;
+static unsigned short green;
+static unsigned short blue;
+
 static int mdnie_send_sequence(struct mdnie_info *mdnie, const unsigned short *seq)
 {
 	int ret = 0, i = 0;
@@ -155,6 +159,24 @@ static int mdnie_send_sequence(struct mdnie_info *mdnie, const unsigned short *s
 	return ret;
 }
 
+static void mdnie_apply_color_correction(struct mdnie_tuning_info *table, unsigned short opcode, unsigned short value)
+{	
+	if(value <= 0xFF)
+	{
+		unsigned short *wbuf = table->sequence;
+		int i = 0;
+		while (wbuf[i] != END_SEQ) 
+		{
+			if(wbuf[i] == opcode)
+			{
+				wbuf[i+1] = (value << 8) + (wbuf[i+1] & 0x00FF);	
+				return;
+			}
+			i += 2;
+		}
+	}
+}
+
 static struct mdnie_tuning_info *mdnie_request_table(struct mdnie_info *mdnie)
 {
 	struct mdnie_tuning_info *table = NULL;
@@ -178,6 +200,11 @@ static struct mdnie_tuning_info *mdnie_request_table(struct mdnie_info *mdnie)
 	}
 
 exit:
+
+	mdnie_apply_color_correction(table, 0x00e1, red);
+	mdnie_apply_color_correction(table, 0x00e5, green);
+	mdnie_apply_color_correction(table, 0x00e9, blue);	
+
 	mutex_unlock(&mdnie->lock);
 
 	return table;
@@ -796,6 +823,30 @@ static ssize_t accessibility_store(struct device *dev,
 
 	return count;
 }
+static ssize_t rgb_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d %d %d", red, green, blue);
+}
+
+static ssize_t rgb_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
+{
+	struct mdnie_info *mdnie = dev_get_drvdata(dev);
+	unsigned short _red, _green, _blue;
+	
+	if(sscanf(buf, "%d %d %d", &_red, &_green, &_blue) != 3)
+		return -EINVAL;
+	
+	if(_red > 0xFF || _green > 0xFF || _blue > 0xFF)
+		return -EINVAL;
+	
+	if(_red != red || _green != green || _blue != blue)	
+	{
+		red = _red;
+		green = _green;
+		blue = _blue;
+		mdnie_update(mdnie);
+	}
+}
 
 #if !defined(CONFIG_FB_MDNIE_PWM)
 static ssize_t color_correct_show(struct device *dev,
@@ -829,6 +880,7 @@ static struct device_attribute mdnie_attributes[] = {
 #if !defined(CONFIG_FB_MDNIE_PWM)
 	__ATTR(color_correct, 0444, color_correct_show, NULL),
 #endif
+	__ATTR(rgb, 0664, rgb_show, rgb_store),
 	__ATTR_NULL,
 };
 
@@ -983,8 +1035,11 @@ static int mdnie_probe(struct platform_device *pdev)
 		memcpy(tuning_table, tuning_table_boe, sizeof(tuning_table));
 #endif
 
-	g_mdnie = mdnie;
-
+	g_mdnie = mdnie;	
+	red = 0xFF;
+	green = 0xFF;
+	blue = 0xFF;
+	
 	mdnie_update(mdnie);
 
 	dev_info(mdnie->dev, "registered successfully\n");
@@ -1012,7 +1067,7 @@ static int mdnie_remove(struct platform_device *pdev)
 #endif
 	class_destroy(mdnie_class);
 	kfree(mdnie);
-
+		
 	return 0;
 }
 
