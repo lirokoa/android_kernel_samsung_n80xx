@@ -12,16 +12,11 @@
  * as published by the Free Software Foundation.
  */
 #include <linux/module.h>
-#include <linux/selinux.h>
 
 #include "security.h"
 
 bool selinux_is_enabled(void)
 {
-#ifdef CONFIG_ALWAYS_ENFORCE
-	return true;
-#else
 	return selinux_enabled;
-#endif
 }
 EXPORT_SYMBOL_GPL(selinux_is_enabled);

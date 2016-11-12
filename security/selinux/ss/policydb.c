@@ -13,7 +13,7 @@
  *
  *	Added conditional policy language extensions
  *
- * Updated: Hewlett-Packard <paul@paul-moore.com>
+ * Updated: Hewlett-Packard <paul.moore@hp.com>
  *
  *      Added support for the policy capability bitmap
  *
@@ -149,7 +149,7 @@ static struct policydb_compat_info policydb_compat[] = {
 		.ocon_num	= OCON_NUM,
 	},
 	{
-		.version	= POLICYDB_VERSION_IOCTL_OPERATIONS,
+		.version	= POLICYDB_VERSION_XPERMS_IOCTL,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM,
 	},
@@ -1828,6 +1828,8 @@ static int policydb_bounds_sanity_check(struct policydb *p)
 
 	return 0;
 }
+
+extern int ss_initialized;
 
 u16 string_to_security_class(struct policydb *p, const char *name)
 {

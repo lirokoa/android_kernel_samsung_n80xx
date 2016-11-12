@@ -46,7 +46,7 @@
 #include <net/xfrm.h>
 #include <net/checksum.h>
 #include <net/udp.h>
-#include <linux/atomic.h>
+#include <asm/atomic.h>
 
 #include "avc.h"
 #include "objsec.h"
@@ -255,7 +255,7 @@ not_from_user:
 
 	*ctxp = ctx = kmalloc(sizeof(*ctx) +
 			      str_len,
-			      GFP_KERNEL);
+			      GFP_ATOMIC);
 
 	if (!ctx) {
 		rc = -ENOMEM;

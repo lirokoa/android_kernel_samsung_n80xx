@@ -15,6 +15,7 @@
 #include <linux/audit.h>
 #include <linux/lsm_audit.h>
 #include <linux/in6.h>
+#include <asm/system.h>
 #include "flask.h"
 #include "av_permissions.h"
 #include "security.h"
@@ -47,31 +48,6 @@ struct avc_cache_stats {
 };
 
 /*
- * We only need this data after we have decided to send an audit message.
- */
-struct selinux_late_audit_data {
-	u32 ssid;
-	u32 tsid;
-	u16 tclass;
-	u32 requested;
-	u32 audited;
-	u32 denied;
-	int result;
-};
-
-/*
- * We collect this at the beginning or during an selinux security operation
- */
-struct selinux_audit_data {
-	/*
-	 * auditdeny is a bit tricky and unintuitive.  See the
-	 * comments in avc.c for it's meaning and usage.
-	 */
-	u32 auditdeny;
-	struct selinux_late_audit_data *slad;
-};
-
-/*
  * AVC operations
  */
 
@@ -84,14 +60,11 @@ int avc_audit(u32 ssid, u32 tsid,
 	      struct common_audit_data *a, unsigned flags);
 
 #define AVC_STRICT 1 /* Ignore permissive mode. */
-#define AVC_OPERATION_CMD 2	/* ignore command when updating operations */
+#define AVC_EXTENDED_PERMS 2	/* update extended permissions */
 int avc_has_perm_noaudit(u32 ssid, u32 tsid,
 			 u16 tclass, u32 requested,
 			 unsigned flags,
 			 struct av_decision *avd);
-
-int avc_has_operation(u32 ssid, u32 tsid, u16 tclass, u32 requested,
-		u16 cmd, struct common_audit_data *ad);
 
 int avc_has_perm_flags(u32 ssid, u32 tsid,
 		       u16 tclass, u32 requested,
@@ -105,6 +78,9 @@ static inline int avc_has_perm(u32 ssid, u32 tsid,
 	return avc_has_perm_flags(ssid, tsid, tclass, requested, auditdata, 0);
 }
 
+int avc_has_extended_perms(u32 ssid, u32 tsid, u16 tclass, u32 requested,
+		u8 driver, u8 perm, struct common_audit_data *ad);
+
 u32 avc_policy_seqno(void);
 
 #define AVC_CALLBACK_GRANT		1
@@ -115,7 +91,7 @@ u32 avc_policy_seqno(void);
 #define AVC_CALLBACK_AUDITALLOW_DISABLE	32
 #define AVC_CALLBACK_AUDITDENY_ENABLE	64
 #define AVC_CALLBACK_AUDITDENY_DISABLE	128
-#define AVC_CALLBACK_ADD_OPERATION	256
+#define AVC_CALLBACK_ADD_XPERMS		256
 
 int avc_add_callback(int (*callback)(u32 event, u32 ssid, u32 tsid,
 				     u16 tclass, u32 perms,
