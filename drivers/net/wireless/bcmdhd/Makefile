@@ -12,6 +12,9 @@ DHDCFLAGS += -Wall -Wstrict-prototypes -Dlinux -DLINUX -DBCMDRIVER             \
         -DKEEP_ALIVE -DCSCAN -DPKT_FILTER_SUPPORT                             \
         -DEMBEDDED_PLATFORM -DPNO_SUPPORT
 
+# CM kernel includes 3.4 backports
+DHDCFLAGS += -DWL_COMPAT_WIRELESS
+
 #################
 # Common feature
 #################
